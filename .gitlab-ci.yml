@@ -32,16 +32,20 @@ job_deploy_to_aws:
     - echo "Déploiement vers AWS..."
     - mvn package -DskipTests
     
-    # 1. On répare le format de la clé pour OpenSSH moderne
+    # 1. On crée le fichier et on le répare
     - cp "$AWS_PRIVATE_KEY" ./temp_key.pem
     - chmod 600 ./temp_key.pem
     
-    # 2. On tente le transfert avec l'utilisateur ubuntu
-    - echo "Tentative de transfert..."
-    - scp -o StrictHostKeyChecking=no -i ./temp_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
+    # 2. COMMANDE CRUCIALE : On convertit la clé au format moderne OpenSSH
+    # Cela règle l'erreur 'libcrypto unsupported'
+    - ssh-keygen -p -f ./temp_key.pem -m pem -N ""
     
-    # 3. Déplacement final sur le serveur
-    - ssh -o StrictHostKeyChecking=no -i ./temp_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
+    - echo "Tentative de transfert..."
+    # 3. On ajoute une option SSH pour accepter les vieilles clés au cas où
+    - scp -o StrictHostKeyChecking=no -o PubkeyAcceptedKeyTypes=+ssh-rsa -i ./temp_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
+    
+    # 4. Finalisation sur le serveur
+    - ssh -o StrictHostKeyChecking=no -o PubkeyAcceptedKeyTypes=+ssh-rsa -i ./temp_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
     - echo "Application déployée !"
   only:
     - master
