@@ -5,23 +5,17 @@ stages:
 
 job_build:
   stage: build
-  tags:
-    - pc-younes
   script:
     - mvn clean compile
 
 job_test:
   stage: test
-  tags:
-    - pc-younes
   script:
     - mvn test
   allow_failure: true
 
 job_deploy:
   stage: deploy
-  tags:
-    - pc-younes
   script:
     - echo "Generation du WAR..."
     - mvn package -DskipTests
