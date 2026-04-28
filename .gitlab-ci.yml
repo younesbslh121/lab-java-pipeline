@@ -28,24 +28,22 @@ job_deploy_to_aws:
   stage: deploy
   tags:
     - pc-younes
-  script:
-    - echo "Déploiement vers AWS avec workaround OpenSSL Legacy..."
+script:
+    - echo "Conversion de la clé vers un format moderne..."
     - mvn package -DskipTests
     
-    # 1. On force le support des anciens formats RSA pour ton Linux
-    - export OPENSSL_CONF=/etc/ssl/openssl.cnf
-    # Si la commande au dessus ne suffit pas, on utilise cette option directement dans SSH
+    # 1. On force la conversion de la clé RSA vers le format PKCS8 (compatible OpenSSL 3)
+    # On utilise 'cat' pour être sûr de lire la variable File correctement
+    - openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in "$AWS_PRIVATE_KEY" -out ./modern_key.pem
+    - chmod 600 ./modern_key.pem
     
-    - cp "$AWS_PRIVATE_KEY" ./temp_key.pem
-    - chmod 600 ./temp_key.pem
+    - echo "Tentative de transfert vers $AWS_IP..."
+    # 2. On utilise la clé convertie
+    - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./        modern_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
     
-    - echo "Tentative de transfert..."
-    # 2. On utilise des options qui forcent SSH à accepter les vieux formats (SHA1 et RSA)
-    - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./temp_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
-    
-    # 3. Déplacement sur le serveur
-    - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./temp_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
-    - echo "Application déployée avec succès !"
-  only:
+    # 3. Déploiement
+    - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./      modern_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
+    - echo "Déploiement réussi !"
+only:
     - master
     - main
