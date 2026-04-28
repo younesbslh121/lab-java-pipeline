@@ -29,13 +29,20 @@ job_deploy_to_aws:
   tags:
     - pc-younes
   script:
-    - echo "Connexion à l'IP -> $AWS_IP"
+    - echo "Déploiement vers AWS..."
     - mvn package -DskipTests
-    - chmod 400 "$AWS_PRIVATE_KEY"
-    # On utilise *.jar ici !
-    - scp -o StrictHostKeyChecking=no -i "$AWS_PRIVATE_KEY" target/*.jar ubuntu@$AWS_IP:/tmp/
-    - ssh -o StrictHostKeyChecking=no -i "$AWS_PRIVATE_KEY" ubuntu@$AWS_IP "ls -l /tmp/*.jar"
-    - echo "Déploiement réussi sur AWS !"
+    
+    # 1. On répare le format de la clé pour OpenSSH moderne
+    - cp "$AWS_PRIVATE_KEY" ./temp_key.pem
+    - chmod 600 ./temp_key.pem
+    
+    # 2. On tente le transfert avec l'utilisateur ubuntu
+    - echo "Tentative de transfert..."
+    - scp -o StrictHostKeyChecking=no -i ./temp_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
+    
+    # 3. Déplacement final sur le serveur
+    - ssh -o StrictHostKeyChecking=no -i ./temp_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
+    - echo "Application déployée !"
   only:
     - master
     - main
