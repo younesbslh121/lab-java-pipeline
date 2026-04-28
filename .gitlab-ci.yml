@@ -3,13 +3,6 @@ stages:
   - test
   - deploy
 
-before_script:
-  - echo "Initialisation du stage $CI_JOB_STAGE"
-  - mvn --version
-
-after_script:
-  - echo "Nettoyage du stage $CI_JOB_STAGE terminé"
-
 job_build:
   stage: build
   tags:
@@ -23,18 +16,18 @@ job_test:
     - pc-younes
   script:
     - mvn test
-  allow_failure: true 
+  allow_failure: true
 
 job_deploy:
   stage: deploy
   tags:
     - pc-younes
   script:
-    - echo "Younes : Generation du WAR et deploiement local..."
+    - echo "Generation du WAR..."
     - mvn package -DskipTests
     - mkdir -p ~/deploy_inpt_java/
     - cp target/*.war ~/deploy_inpt_java/
-    - echo "Deploiement termine dans ~/deploy_inpt_java/"
+    - echo "Termine !"
   only:
     - main
     - master
