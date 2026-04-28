@@ -35,3 +35,4 @@ job_deploy:
     - cp target/*.war /tmp/web_server/
   only:
     - main
+    - master
