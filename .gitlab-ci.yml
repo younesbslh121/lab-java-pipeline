@@ -1,6 +1,3 @@
-# Note : L'image Docker est inutile avec un runner 'shell' 
-# car il utilise le Maven de ton ASUS TUF directement.
-
 stages:
   - build
   - test
@@ -8,9 +5,7 @@ stages:
 
 before_script:
   - echo "Initialisation du stage $CI_JOB_STAGE"
-  # Extraction de la version du projet pour ton rapport
-  - export PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-  - echo "Version du projet : $PROJECT_VERSION"
+  - mvn --version
 
 after_script:
   - echo "Nettoyage du stage $CI_JOB_STAGE terminé"
@@ -35,13 +30,11 @@ job_deploy:
   tags:
     - pc-younes
   script:
-    - echo "Younes : Génération du WAR et déploiement local sur ASUS TUF..."
+    - echo "Younes : Génération du WAR et déploiement local..."
     - mvn package -DskipTests
-    # Création d'un dossier de déploiement dans ton dossier personnel pour que ce soit permanent
     - mkdir -p ~/deploy_inpt_java/
     - cp target/*.war ~/deploy_inpt_java/
-    - echo "Déploiement terminé. Ton WAR est ici : ~/deploy_inpt_java/"
-    - ls -l ~/deploy_inpt_java/
+    - echo "Déploiement terminé dans ~/deploy_inpt_java/"
   only:
     - main
     - master
