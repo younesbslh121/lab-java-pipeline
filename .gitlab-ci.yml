@@ -28,24 +28,21 @@ job_deploy_to_aws:
   tags:
     - pc-younes
   script:
-    - echo "Déploiement final vers AWS Ubuntu ($AWS_IP)..."
+    - echo "Déploiement par Agent SSH..."
     - mvn package -DskipTests
     
-    # 1. Préparation du dossier SSH et nettoyage de la clé
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    # On supprime les retours à la ligne Windows éventuels qui corrompent la clé
-    - echo "$AWS_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa_aws
-    - chmod 600 ~/.ssh/id_rsa_aws
+    # 1. On démarre l'agent SSH et on lui donne la clé proprement
+    - eval $(ssh-agent -s)
+    # On utilise "ssh-add" en lui envoyant le contenu de la variable directement
+    - echo "$AWS_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     
-    - echo "Tentative de transfert du JAR..."
-    # 2. Transfert avec options de compatibilité pour OpenSSL 3 / RSA
-    - scp -o StrictHostKeyChecking=no -o BatchMode=yes -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ~/.ssh/id_rsa_aws target/*.jar ubuntu@$AWS_IP:/tmp/
+    - echo "Tentative de transfert vers $AWS_IP..."
+    # 2. On fait le transfert (plus besoin de l'option -i car la clé est dans l'agent)
+    - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa target/*.jar ubuntu@$AWS_IP:/tmp/
     
-    # 3. Déploiement dans le dossier Tomcat 9
-    - ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ~/.ssh/id_rsa_aws ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
-    
-    - echo "Félicitations Younes ! Ton application est déployée."
+    # 3. Installation finale
+    - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
+    - echo "Déploiement terminé avec succès !"
   only:
     - master
     - main
