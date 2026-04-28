@@ -20,7 +20,6 @@ job_test:
     - pc-younes
   script:
     - mvn test
-  # On autorise la suite si les tests passent
   dependencies:
     - job_build
 
@@ -28,22 +27,22 @@ job_deploy_to_aws:
   stage: deploy
   tags:
     - pc-younes
-script:
-    - echo "Conversion de la clé vers un format moderne..."
+  script:
+    - echo "Préparation du package et conversion de la clé..."
     - mvn package -DskipTests
     
-    # 1. On force la conversion de la clé RSA vers le format PKCS8 (compatible OpenSSL 3)
-    # On utilise 'cat' pour être sûr de lire la variable File correctement
+    # 1. Conversion de la clé RSA (vieux format) vers PKCS8 (format moderne supporté par ton Linux)
+    # On utilise "cat" pour extraire le contenu si GitLab l'envoie mal en tant que chemin de fichier
     - openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in "$AWS_PRIVATE_KEY" -out ./modern_key.pem
     - chmod 600 ./modern_key.pem
     
-    - echo "Tentative de transfert vers $AWS_IP..."
-    # 2. On utilise la clé convertie
-    - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./        modern_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
+    - echo "Tentative de transfert vers l'IP $AWS_IP..."
+    # 2. Transfert du JAR vers le dossier temporaire d'AWS avec options de compatibilité RSA
+    - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./modern_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
     
-    # 3. Déploiement
-    - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./      modern_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
-    - echo "Déploiement réussi !"
-only:
+    # 3. Déplacement final vers le dossier Tomcat 9 sur le serveur Ubuntu
+    - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./modern_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
+    - echo "Déploiement réussi avec succès sur AWS !"
+  only:
     - master
     - main
