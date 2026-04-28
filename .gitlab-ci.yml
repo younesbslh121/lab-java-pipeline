@@ -29,13 +29,17 @@ job_deploy_to_aws:
   tags:
     - pc-younes
   script:
-    - echo "Préparation du package final..."
-    - mvn package -DskipTests
     - echo "Déploiement vers l'instance Ubuntu ($AWS_IP)..."
-    - chmod 400 $AWS_PRIVATE_KEY
-    - scp -o StrictHostKeyChecking=no -i $AWS_PRIVATE_KEY target/*.war ubuntu@$AWS_IP:/tmp/
-    - ssh -o StrictHostKeyChecking=no -i $AWS_PRIVATE_KEY ubuntu@$AWS_IP "sudo mv /tmp/*.war /var/lib/tomcat9/webapps/"
-    - echo "Déploiement terminé avec succès sur AWS !"
+    # Utilisation des guillemets pour protéger le chemin de la variable File
+    - chmod 400 "$AWS_PRIVATE_KEY"
+    
+    # Transfert avec l'utilisateur ubuntu
+    - scp -o StrictHostKeyChecking=no -i "$AWS_PRIVATE_KEY" target/*.jar ubuntu@$AWS_IP:/tmp/
+    
+    # Installation sur le serveur (Vérifie si c'est .jar ou .war selon ton projet)
+    - ssh -o StrictHostKeyChecking=no -i "$AWS_PRIVATE_KEY" ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
+    
+    - echo "Déploiement terminé avec succès !"
   only:
     - master
     - main
