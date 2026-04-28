@@ -30,11 +30,11 @@ job_deploy:
   tags:
     - pc-younes
   script:
-    - echo "Younes : Génération du WAR et déploiement local..."
+    - echo "Younes : Generation du WAR et deploiement local..."
     - mvn package -DskipTests
     - mkdir -p ~/deploy_inpt_java/
     - cp target/*.war ~/deploy_inpt_java/
-    - echo "Déploiement terminé dans ~/deploy_inpt_java/"
+    - echo "Deploiement termine dans ~/deploy_inpt_java/"
   only:
     - main
     - master
