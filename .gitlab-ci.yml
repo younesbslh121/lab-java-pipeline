@@ -28,25 +28,24 @@ job_deploy_to_aws:
   tags:
     - pc-younes
   script:
-    - echo "Déploiement forcé vers AWS..."
+    - echo "Déploiement vers AWS Ubuntu ($AWS_IP)..."
     - mvn package -DskipTests
     
-    # 1. On écrit la clé manuellement dans un fichier pour éviter les erreurs de GitLab File
-    # On utilise des guillemets simples pour éviter que le Shell n'interprète les caractères spéciaux
+    # 1. Création manuelle du fichier de clé à partir de la variable
     - echo "$AWS_PRIVATE_KEY" > ./raw_key.pem
     - chmod 600 ./raw_key.pem
     
-    # 2. Conversion vers PKCS8 (format moderne)
+    # 2. Conversion vers le format PKCS8 pour compatibilité avec ton Linux moderne
     - openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ./raw_key.pem -out ./modern_key.pem
     - chmod 600 ./modern_key.pem
     
-    - echo "Tentative de transfert vers $AWS_IP..."
-    # 3. Transfert avec options de compatibilité
+    - echo "Tentative de transfert du JAR..."
+    # 3. Transfert vers le dossier /tmp/ du serveur AWS
     - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./modern_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
     
-    # 4. Installation sur Tomcat
+    # 4. Installation dans le dossier Tomcat 9 d'Ubuntu
     - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./modern_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
-    - echo "C'est gagné ! Déploiement terminé."
+    - echo "Déploiement réussi ! Ton application est en ligne."
   only:
     - master
     - main
