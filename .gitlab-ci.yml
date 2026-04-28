@@ -28,24 +28,24 @@ job_deploy_to_aws:
   tags:
     - pc-younes
   script:
-    - echo "Déploiement vers AWS Ubuntu ($AWS_IP)..."
+    - echo "Déploiement final vers AWS Ubuntu ($AWS_IP)..."
     - mvn package -DskipTests
     
-    # 1. Création manuelle du fichier de clé à partir de la variable
-    - echo "$AWS_PRIVATE_KEY" > ./raw_key.pem
-    - chmod 600 ./raw_key.pem
-    
-    # 2. Conversion vers le format PKCS8 pour compatibilité avec ton Linux moderne
-    - openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ./raw_key.pem -out ./modern_key.pem
-    - chmod 600 ./modern_key.pem
+    # 1. Préparation du dossier SSH et nettoyage de la clé
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    # On supprime les retours à la ligne Windows éventuels qui corrompent la clé
+    - echo "$AWS_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa_aws
+    - chmod 600 ~/.ssh/id_rsa_aws
     
     - echo "Tentative de transfert du JAR..."
-    # 3. Transfert vers le dossier /tmp/ du serveur AWS
-    - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./modern_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
+    # 2. Transfert avec options de compatibilité pour OpenSSL 3 / RSA
+    - scp -o StrictHostKeyChecking=no -o BatchMode=yes -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ~/.ssh/id_rsa_aws target/*.jar ubuntu@$AWS_IP:/tmp/
     
-    # 4. Installation dans le dossier Tomcat 9 d'Ubuntu
-    - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./modern_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
-    - echo "Déploiement réussi ! Ton application est en ligne."
+    # 3. Déploiement dans le dossier Tomcat 9
+    - ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ~/.ssh/id_rsa_aws ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
+    
+    - echo "Félicitations Younes ! Ton application est déployée."
   only:
     - master
     - main
