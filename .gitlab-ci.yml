@@ -28,21 +28,25 @@ job_deploy_to_aws:
   tags:
     - pc-younes
   script:
-    - echo "Préparation du package et conversion de la clé..."
+    - echo "Déploiement forcé vers AWS..."
     - mvn package -DskipTests
     
-    # 1. Conversion de la clé RSA (vieux format) vers PKCS8 (format moderne supporté par ton Linux)
-    # On utilise "cat" pour extraire le contenu si GitLab l'envoie mal en tant que chemin de fichier
-    - openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in "$AWS_PRIVATE_KEY" -out ./modern_key.pem
+    # 1. On écrit la clé manuellement dans un fichier pour éviter les erreurs de GitLab File
+    # On utilise des guillemets simples pour éviter que le Shell n'interprète les caractères spéciaux
+    - echo "$AWS_PRIVATE_KEY" > ./raw_key.pem
+    - chmod 600 ./raw_key.pem
+    
+    # 2. Conversion vers PKCS8 (format moderne)
+    - openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ./raw_key.pem -out ./modern_key.pem
     - chmod 600 ./modern_key.pem
     
-    - echo "Tentative de transfert vers l'IP $AWS_IP..."
-    # 2. Transfert du JAR vers le dossier temporaire d'AWS avec options de compatibilité RSA
+    - echo "Tentative de transfert vers $AWS_IP..."
+    # 3. Transfert avec options de compatibilité
     - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./modern_key.pem target/*.jar ubuntu@$AWS_IP:/tmp/
     
-    # 3. Déplacement final vers le dossier Tomcat 9 sur le serveur Ubuntu
+    # 4. Installation sur Tomcat
     - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa -i ./modern_key.pem ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
-    - echo "Déploiement réussi avec succès sur AWS !"
+    - echo "C'est gagné ! Déploiement terminé."
   only:
     - master
     - main
