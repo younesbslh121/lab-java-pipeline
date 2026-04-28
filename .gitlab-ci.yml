@@ -1,27 +1,33 @@
 stages:
   - build
-  - test
   - deploy
 
 job_build:
   stage: build
+  tags:
+    - pc-younes
   script:
-    - mvn clean compile
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - target/*.war
+    expire_in: 1 hour
 
-job_test:
-  stage: test
-  script:
-    - mvn test
-  allow_failure: true
-
-job_deploy:
+job_deploy_to_aws:
   stage: deploy
+  tags:
+    - pc-younes
   script:
-    - echo "Generation du WAR..."
-    - mvn package -DskipTests
-    - mkdir -p ~/deploy_inpt_java/
-    - cp target/*.war ~/deploy_inpt_java/
-    - echo "Termine !"
+    - echo "Préparation de la connexion vers AWS Ubuntu..."
+    # Configuration de la clé privée (Variable de type File dans GitLab)
+    - chmod 400 $AWS_PRIVATE_KEY
+    - echo "Envoi du fichier WAR vers l'instance Ubuntu ($AWS_IP)..."
+    # Transfert vers /tmp/ avec l'utilisateur 'ubuntu'
+    - scp -o StrictHostKeyChecking=no -i $AWS_PRIVATE_KEY target/*.war ubuntu@$AWS_IP:/tmp/
+    # Déplacement vers le dossier Tomcat 9 d'Ubuntu
+    - ssh -o StrictHostKeyChecking=no -i $AWS_PRIVATE_KEY ubuntu@$AWS_IP "sudo mv /tmp/*.war /var/lib/tomcat9/webapps/"
+    - echo "Déploiement terminé !"
+    - echo "Accès sur http://$AWS_IP:8080/"
   only:
-    - main
     - master
+    - main
