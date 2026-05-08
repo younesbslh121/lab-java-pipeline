@@ -1,15 +1,10 @@
-FROM maven:3-jdk-8-alpine as builder
+# Étape 1 : Build avec Maven
+FROM maven:3.8.5-openjdk-17 AS build
+COPY . .
+RUN mvn clean package -DskipTests
 
-WORKDIR /usr/src/app
-
-COPY . /usr/src/app
-RUN mvn package
-
-FROM openjdk:8-jre-alpine
-
-COPY --from=builder /usr/src/app/target/*.jar /app.jar
-
+# Étape 2 : Exécution
+FROM openjdk:17-jdk-slim
+COPY --from=build /target/*.jar app.jar
 EXPOSE 8080
-
-ENTRYPOINT ["java"]
-CMD ["-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
