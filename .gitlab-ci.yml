@@ -48,4 +48,3 @@ job_deploy_simule:
     - echo "ÉTAT DU DÉPLOIEMENT : SUCCÈS (SIMULÉ)"
   only:
     - master
-    - main
