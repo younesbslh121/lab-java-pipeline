@@ -8,7 +8,7 @@ job_build:
   tags:
     - pc-younes
   script:
-    - echo "Phase de compilation du projet Java..."
+    - echo "Phase de compilation..."
     - mvn clean compile
   artifacts:
     paths:
@@ -20,7 +20,7 @@ job_test:
   tags:
     - pc-younes
   script:
-    - echo "Exécution des tests unitaires..."
+    - echo "Exécution des tests..."
     - mvn test
   dependencies:
     - job_build
@@ -30,18 +30,14 @@ job_deploy_simule:
   tags:
     - pc-younes
   script:
-    - echo "DÉMARRAGE DE LA SIMULATION DE DÉPLOIEMENT VERS AWS..."
+    - echo "DÉMARRAGE DE LA SIMULATION..."
     - mvn package -DskipTests
-    - echo "Connexion SSH à l'instance 107.20.23.113 en cours..."
-    - sleep 3
+    - echo "Connexion à l'instance $AWS_IP..."
+    - sleep 2
     - mkdir -p ./env_production_aws/webapps/
-    - echo "Transfert du fichier .jar vers le serveur de production..."
     - cp target/*.jar ./env_production_aws/webapps/
-    - echo "Vérification de l'intégrité du déploiement..."
     - ls -lh ./env_production_aws/webapps/
-    - echo "L'application est déployée avec succès sur l'instance AWS."
-    - echo "URL d'accès prévue : http://107.20.23.113:8080/demo"
-    - echo "ÉTAT DU PIPELINE : SUCCÈS TOTAL"
+    - echo "DÉPLOIEMENT RÉUSSI SUR AWS"
   only:
     - master
     - main
