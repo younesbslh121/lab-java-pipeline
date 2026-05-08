@@ -1,9 +1,9 @@
-# Étape 1 : Build avec Maven
-FROM maven:3.8.5-openjdk-17 AS build
+# Étape 1 : Build (Utilisation d'une image Maven plus commune)
+FROM maven:3-openjdk-17-slim AS build
 COPY . .
 RUN mvn clean package -DskipTests
 
-# Étape 2 : Exécution
+# Étape 2 : Run
 FROM openjdk:17-jdk-slim
 COPY --from=build /target/*.jar app.jar
 EXPOSE 8080
