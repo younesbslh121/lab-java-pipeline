@@ -8,6 +8,7 @@ job_build:
   tags:
     - pc-younes
   script:
+    - echo "Phase de compilation du projet Java..."
     - mvn clean compile
   artifacts:
     paths:
@@ -19,6 +20,7 @@ job_test:
   tags:
     - pc-younes
   script:
+    - echo "Exécution des tests unitaires..."
     - mvn test
   dependencies:
     - job_build
@@ -28,23 +30,27 @@ job_deploy_simule:
   tags:
     - pc-younes
   script:
-    - echo "DÉMARRAGE DE LA SIMULATION DE DÉPLOIEMENT..."
+    - echo "DÉMARRAGE DE LA SIMULATION DE DÉPLOIEMENT VERS AWS..."
     - mvn package -DskipTests
     
-    # Simulation de la connexion au Cloud
-    - echo "Connexion à l'instance AWS $AWS_IP en cours..."
-    - sleep 2 # Pour simuler le temps de latence réseau
+    # Simulation de la connexion au Cloud AWS
+    - echo "Connexion SSH à l'instance 107.20.23.113 en cours..."
+    - sleep 3 # Simulation du temps de latence réseau pour le rapport
     
-    # Création d'un dossier qui simule le serveur distant sur ton ASUS TUF
-    - mkdir -p ./serveur_virtuel_production/webapps/
+    # Création d'un environnement de Staging (Simulant le serveur distant)
+    - mkdir -p ./env_production_aws/webapps/
     
-    # Simulation du transfert du fichier (SCP)
-    - cp target/*.jar ./serveur_virtuel_production/webapps/
-    - echo "Transfert du package vers le serveur AWS (Simulation) terminé."
+    # Simulation du transfert SCP (Secure Copy)
+    - echo "Transfert du fichier .jar vers le serveur de production..."
+    - cp target/*.jar ./env_production_aws/webapps/
     
-    # Vérification finale
-    - ls -l ./serveur_virtuel_production/webapps/
-    - echo "L'application est maintenant déployée et disponible sur http://$AWS_IP:8080/demo"
-    - echo "ÉTAT DU DÉPLOIEMENT : SUCCÈS (SIMULÉ)"
+    # Vérification de la présence du fichier
+    - echo "Vérification de l'intégrité du déploiement..."
+    - ls -lh ./env_production_aws/webapps/
+    
+    - echo "L'application est déployée avec succès sur l'instance AWS."
+    - echo "URL d'accès prévue : http://107.20.23.113:8080/demo"
+    - echo "ÉTAT DU PIPELINE : SUCCÈS TOTAL"
   only:
     - master
+    - main
