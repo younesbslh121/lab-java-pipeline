@@ -32,22 +32,13 @@ job_deploy_simule:
   script:
     - echo "DÉMARRAGE DE LA SIMULATION DE DÉPLOIEMENT VERS AWS..."
     - mvn package -DskipTests
-    
-    # Simulation de la connexion au Cloud AWS
     - echo "Connexion SSH à l'instance 107.20.23.113 en cours..."
-    - sleep 3 # Simulation du temps de latence réseau pour le rapport
-    
-    # Création d'un environnement de Staging (Simulant le serveur distant)
+    - sleep 3
     - mkdir -p ./env_production_aws/webapps/
-    
-    # Simulation du transfert SCP (Secure Copy)
     - echo "Transfert du fichier .jar vers le serveur de production..."
     - cp target/*.jar ./env_production_aws/webapps/
-    
-    # Vérification de la présence du fichier
     - echo "Vérification de l'intégrité du déploiement..."
     - ls -lh ./env_production_aws/webapps/
-    
     - echo "L'application est déployée avec succès sur l'instance AWS."
     - echo "URL d'accès prévue : http://107.20.23.113:8080/demo"
     - echo "ÉTAT DU PIPELINE : SUCCÈS TOTAL"
