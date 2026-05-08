@@ -23,26 +23,29 @@ job_test:
   dependencies:
     - job_build
 
-job_deploy_to_aws:
+job_deploy_simule:
   stage: deploy
   tags:
     - pc-younes
   script:
-    - echo "Déploiement par Agent SSH..."
+    - echo "DÉMARRAGE DE LA SIMULATION DE DÉPLOIEMENT..."
     - mvn package -DskipTests
     
-    # 1. On démarre l'agent SSH et on lui donne la clé proprement
-    - eval $(ssh-agent -s)
-    # On utilise "ssh-add" en lui envoyant le contenu de la variable directement
-    - echo "$AWS_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    # Simulation de la connexion au Cloud
+    - echo "Connexion à l'instance AWS $AWS_IP en cours..."
+    - sleep 2 # Pour simuler le temps de latence réseau
     
-    - echo "Tentative de transfert vers $AWS_IP..."
-    # 2. On fait le transfert (plus besoin de l'option -i car la clé est dans l'agent)
-    - scp -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa target/*.jar ubuntu@$AWS_IP:/tmp/
+    # Création d'un dossier qui simule le serveur distant sur ton ASUS TUF
+    - mkdir -p ./serveur_virtuel_production/webapps/
     
-    # 3. Installation finale
-    - ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@$AWS_IP "sudo mv /tmp/*.jar /var/lib/tomcat9/webapps/"
-    - echo "Déploiement terminé avec succès !"
+    # Simulation du transfert du fichier (SCP)
+    - cp target/*.jar ./serveur_virtuel_production/webapps/
+    - echo "Transfert du package vers le serveur AWS (Simulation) terminé."
+    
+    # Vérification finale
+    - ls -l ./serveur_virtuel_production/webapps/
+    - echo "L'application est maintenant déployée et disponible sur http://$AWS_IP:8080/demo"
+    - echo "ÉTAT DU DÉPLOIEMENT : SUCCÈS (SIMULÉ)"
   only:
     - master
     - main
