@@ -37,12 +37,22 @@ jobs:
   # Étape B : Création image Docker (Questions B.1, B.2, B.6)
   docker-build:
     name: Docker Build and Push
-    needs: sonarcloud # Le build Docker attend le succès de SonarCloud (Question A.9)
+    needs: sonarcloud
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' # Filtre "only" pour la branche master (Question B.6)
+    if: github.ref == 'refs/heads/master'
     
     steps:
       - uses: actions/checkout@v4
+
+      # AJOUT : Installer Java et compiler pour générer le dossier /target
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven (Generate JAR)
+        run: mvn clean package -DskipTests # Génère le .jar sans relancer les tests
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
