@@ -1,10 +1,11 @@
 stages:
   - build
   - test
-  - deploy
+  - docker
 
 job_build:
   stage: build
+  image: maven:3.9-eclipse-temurin-17
   tags:
     - pc-younes
   script:
@@ -15,29 +16,37 @@ job_build:
       - target/
     expire_in: 1 hour
 
-job_test:
+job_sonar_test:
   stage: test
+  image: maven:3.9-eclipse-temurin-17
   tags:
     - pc-younes
-  script:
-    - echo "Exécution des tests..."
-    - mvn test
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
   dependencies:
     - job_build
+  script:
+    - echo "Exécution des tests et analyse SonarCloud..."
 
-job_deploy_simule:
-  stage: deploy
+    - mvn verify sonar:sonar -Dsonar.projectKey=younesbslh121_lab-java-pipeline -Dsonar.qualitygate.wait=true
+  allow_failure: false
+
+job_docker:
+  stage: docker
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
   tags:
     - pc-younes
+  before_script:
+
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - echo "DÉMARRAGE DE LA SIMULATION..."
-    - mvn package -DskipTests
-    - echo "Connexion à l'instance $AWS_IP..."
-    - sleep 2
-    - mkdir -p ./env_production_aws/webapps/
-    - cp target/*.jar ./env_production_aws/webapps/
-    - ls -lh ./env_production_aws/webapps/
-    - echo "DÉPLOIEMENT RÉUSSI SUR AWS"
+    - echo "Construction et push de l'image Docker..."
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
+
   only:
-    - master
     - main
+    - master
