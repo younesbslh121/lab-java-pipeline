@@ -2,27 +2,34 @@ package com.example.demo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
+@RestController
 public class DemoApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(DemoApplication.class, args);
     }
 
-    // Cette méthode va générer des Code Smells (Variables inutilisées, complexité)
-    public void codeSaleMethode() {
-        int x = 10; // Variable inutilisée (Code Smell)
+    // CE CODE EST NÉCESSAIRE POUR QUE LE TEST PASSE
+    @GetMapping("/")
+    public String home() {
+        return "Spring is here!";
+    }
+
+    // CE CODE VA GÉNÉRER TES "CODE SMELLS" SUR SONARCLOUD
+    public void methodeAvecCodeSale() {
+        int x = 10; // Variable inutilisée
         int y = 20; 
         
-        if (true) { // Condition stupide
+        if (true) {
             if (true) {
                 if (true) {
-                    System.out.println("Trop d'imbrications !"); // Complexité cognitive
+                    System.out.println("Trop d'imbrications !");
                 }
             }
         }
-        
-        String motDePasse = "12345"; // Fail de sécurité potentiel
     }
 }
