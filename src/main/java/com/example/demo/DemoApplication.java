@@ -19,17 +19,5 @@ public class DemoApplication {
         return "Spring is here!";
     }
 
-    // CE CODE VA GÉNÉRER TES "CODE SMELLS" SUR SONARCLOUD
-    public void methodeAvecCodeSale() {
-        int x = 10; // Variable inutilisée
-        int y = 20; 
-        
-        if (true) {
-            if (true) {
-                if (true) {
-                    System.out.println("Trop d'imbrications !");
-                }
-            }
-        }
-    }
+
 }
