@@ -1,10 +1,6 @@
-# Étape 1 : Build (Utilisation d'une image Maven plus commune)
-FROM maven:3-openjdk-17-slim AS build
-COPY . .
-RUN mvn clean package -DskipTests
-
-# Étape 2 : Run
-FROM openjdk:17-jdk-slim
-COPY --from=build /target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Utilisation d'une image légère pour le Cloud (Alpine)
+FROM eclipse-temurin:17-jre-alpine
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} app.jar
+# Exécution de l'application
+ENTRYPOINT ["java","-jar","/app.jar"]
