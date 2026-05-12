@@ -1,21 +1,28 @@
 package com.example.demo;
 
-import org.springframework.boot.*;
-import org.springframework.boot.autoconfigure.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@RestController
 public class DemoApplication {
 
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
 
-//test
-	@GetMapping("/")
-	public String home() {
-		return "Spring is here!";
-	}
-
-	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
-	}
+    // Cette méthode va générer des Code Smells (Variables inutilisées, complexité)
+    public void codeSaleMethode() {
+        int x = 10; // Variable inutilisée (Code Smell)
+        int y = 20; 
+        
+        if (true) { // Condition stupide
+            if (true) {
+                if (true) {
+                    System.out.println("Trop d'imbrications !"); // Complexité cognitive
+                }
+            }
+        }
+        
+        String motDePasse = "12345"; // Fail de sécurité potentiel
+    }
 }
