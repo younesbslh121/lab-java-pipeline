@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  # Étape A : Intégration SonarCloud (Questions A.5, A.8, A.9)
+  # Étape A : Analyse SonarCloud (Questions A.5, A.8, A.9)
   sonarcloud:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
@@ -26,7 +26,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # On spécifie l'URL de SonarCloud pour éviter l'erreur localhost:9000
+        # Correction de l'URL et des identifiants d'organisation
         run: >
           mvn -B verify sonar:sonar 
           -Dsonar.projectKey=younesbslh121_lab-java-pipeline 
@@ -37,10 +37,9 @@ jobs:
   # Étape B : Création image Docker (Questions B.1, B.2, B.6)
   docker-build:
     name: Docker Build and Push
-    needs: sonarcloud # Bloque le build si SonarCloud échoue (Question A.9)
+    needs: sonarcloud # Le build Docker attend le succès de SonarCloud (Question A.9)
     runs-on: ubuntu-latest
-    # Filtre de branche (Question B.6)
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' # Filtre "only" pour la branche master (Question B.6)
     
     steps:
       - uses: actions/checkout@v4
